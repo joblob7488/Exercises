@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"net"
-	"runtime"
+	//"runtime"
 )
 
-func receiver(){
+func receiver(finishCh chan bool){
 	// Specify the address to listen on (including port)
 	recAddress := ":20013" //Opprett streng med IP addresse (eller portnummer, begge funker)
 	udpAddr, err := net.ResolveUDPAddr("udp", recAddress) //finner UDP addresses tilknyttet IP addressen/portnummeret
@@ -24,7 +24,7 @@ func receiver(){
 	}
 
 
-	defer recConn.Close() //defer sier at en funksjon, i dette tilfellet conn.Close() som dreper UDPConn-en vår,
+	//defer recConn.Close() //defer sier at en funksjon, i dette tilfellet conn.Close() som dreper UDPConn-en vår,
 	//skal utføres når funksjonen den er i, i dette tilfellet receiver, er ferdig
 
 	fmt.Println("UDP Server listening on", recAddress)
@@ -44,9 +44,11 @@ func receiver(){
 		data := buffer[:n]
 		fmt.Printf("Received from %v: %s\n", clientAddr, data)
 	}
+
+	finishCh <- true
 }
 
-func sender(){
+func sender(finishCh chan bool){
 	sendAddress := ":20013"
 	serverAddr, err := net.ResolveUDPAddr("udp", sendAddress)
 
@@ -67,19 +69,33 @@ func sender(){
 	message := []byte("Hiya guys!")
 
 	// Send the message
-	_, err = sendConn.Write(message)
-	if err != nil {
-		fmt.Println("Error sending message:", err)
-		return
+	for i := 0; i < 10; i++ {
+		_, err = sendConn.Write(message)
+		if err != nil {
+			fmt.Println("Error sending message:", err)
+			return
 	}
 
 	fmt.Println("Message sent to", serverAddr)
+	}
+
+	finishCh <- true
+
 }
 
 
 func main() {
-	runtime.GOMAXPROCS(2)
+	//runtime.GOMAXPROCS(2)
 
-	go sender()
-	go receiver()
+	finishSendCh := make(chan bool)
+	finishRecCh := make(chan bool)
+
+	go sender(finishSendCh)
+	go receiver(finishRecCh)
+
+	for{
+		if <-finishRecCh && <-finishSendCh{
+			fmt.Println("Finished")
+		}
+	}
 }
