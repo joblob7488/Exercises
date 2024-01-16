@@ -81,7 +81,7 @@ func sender() {
 		// Send the message
 		_, err = sendConn.Write(message)
 		if err != nil {
-			error_ch <- "Error sending message:"
+			error_ch <- fmt.Sprintf("Error sending message: %v", err)
 			return
 		}
 		time.Sleep(500 * time.Millisecond)
@@ -110,7 +110,7 @@ func server() {
 }
 
 func main() {
-	runtime.GOMAXPROCS(2)
+	runtime.GOMAXPROCS(3)
 
 	go sender()
 	go receiver()
