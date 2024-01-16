@@ -43,6 +43,7 @@ func receiver(finishCh chan bool){
 		// Process the received data
 		data := buffer[:n]
 		fmt.Printf("Received from %v: %s\n", clientAddr, data)
+		convChan <- ""
 	}
 
 	finishCh <- true

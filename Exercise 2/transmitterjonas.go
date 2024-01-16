@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"time"
 )
 
 func main() {
@@ -15,25 +16,44 @@ func main() {
 		return
 	}
 
-	// Create a UDP connection
-	conn, err := net.DialUDP("udp", nil, udpAddr) //returnerer en net.UDPConn variabel som kan sende og receive fra UDP addressen
-
-	if err != nil { //blablabla feilhåndtering
+	tranconn, err := net.DialUDP("udp", nil, udpAddr)
+	if err != nil {
 		fmt.Println("Error listening on UDP:", err)
 		return
 	}
-	defer conn.Close()
-
-	fmt.Println("UDP Server dialing on", address)
-
-	// message er strengen som sendes til serveren
-	message := []byte("Hello Mario")
-
-	_, err = conn.Write(message) //sender message til serveren
-	if err != nil {
-		fmt.Println("Error writing to UDP address:", err)
+	defer tranconn.Close()
+	// Create a UDP connection
+	recconn, err := net.ListenUDP("udp", udpAddr) //returnerer en net.UDPConn variabel som kan sende og receive fra UDP addressen
+	if err != nil {                               //blablabla feilhåndtering
+		fmt.Println("Error listening on UDP:", err)
 		return
 	}
+	defer recconn.Close() //defer sier at en funksjon, i dette tilfellet conn.Close() som dreper UDPConn-en vår,
+	//skal utføres når funksjonen den er i, i dette tilfellet main, er ferdig
+	for {
+		message := []byte("Hiya guys!")
 
-	fmt.Println("Data sent to the UDP server.")
+		// Send the message
+		_, err = tranconn.Write(message)
+		if err != nil {
+			fmt.Println("Error sending message:", err)
+			return
+		}
+
+		// Buffer to hold incoming data
+		buffer := make([]byte, 1024)
+
+		// Read data from the connection
+		n, clientAddr, err := recconn.ReadFromUDP(buffer)
+		if err != nil {
+			fmt.Println("Error reading from UDP:", err)
+			return
+		}
+
+		// Process the received data
+		data := buffer[:n]
+		fmt.Printf("Received from %v: %s\n", clientAddr, data)
+		time.Sleep(500 * time.Millisecond)
+
+	}
 }
