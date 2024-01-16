@@ -3,15 +3,15 @@ package main
 import (
 	//"Network-go/network/bcast"
 	//"Network-go/network/localip"
+	"Network-go/network/bcast"
 	"Network-go/network/peers"
-	//"flag"
 	//"fmt"
 	//"os"
 	//"time"
 )
 
 type msg struct {
-	msg string
+	msg    string
 	number uint
 }
 
@@ -19,7 +19,7 @@ type con_status int
 type tx_status int
 type rx_status int
 
-const(
+const (
 	Disconnected con_status = iota
 	Connecting
 	Connected
@@ -33,45 +33,45 @@ const(
 
 //Some "alive" statement every x ms also needs to be incorporated
 
-const(
+const (
 	Transmitted tx_status = iota
 	Confirmed_transmitted
 )
 
-const(
+const (
 	Recieved rx_status = iota
 	Confirmed_recieved
 )
 
-type node struct{
-	id string //unique id for the network
+type node struct {
+	id         string //unique id for the network
 	connection con_status
-	transmit tx_status
-	recieve rx_status
+	transmit   tx_status
+	recieve    rx_status
 }
 
-func transmit(tx_ch chan){
+func transmit(tx_ch chan string) {
 	//
 }
 
-func recieve(ch chan, port uint){
-	peers.Receiver(port, ch)
+func recieve(ch chan string, port int) {
+	bcast.Receiver(port, ch)
 }
 
-func main(){
-	if id == "" {
-		localIP, err := localip.LocalIP()
-		if err != nil {
-			fmt.Println(err)
-			localIP = "DISCONNECTED"
-		}
-		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
-	}
+func main() {
 
-	rx := make(rx_ch chan)
-	go recieve(rx_ch,30000)
-	for{
-		println(<-rx)
-	}
+	//Check for active nodes on ip:port
+	peerUpdateCh := make(chan peers.PeerUpdate)
+	go peers.Receiver(30000, peerUpdateCh)
 
+	//define the datatype we want to recive
+	rx_ch := make(chan string)
+
+	//recieve thread
+	go recieve(rx_ch, 30000)
+
+	//printing loop
+	for {
+		println(<-rx_ch)
+	}
 }
