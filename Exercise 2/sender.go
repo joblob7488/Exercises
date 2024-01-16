@@ -7,7 +7,7 @@ import (
 
 func main() {
 	// Resolve the UDP address of the server
-	port := "20013"
+	port := ":20013"
 	serverAddr, err := net.ResolveUDPAddr("udp", port)
 	if err != nil {
 		fmt.Println("Error resolving UDP address:", err)

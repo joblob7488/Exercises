@@ -11,8 +11,6 @@ func receiver(){
 	recAddress := ":20013" //Opprett streng med IP addresse (eller portnummer, begge funker)
 	udpAddr, err := net.ResolveUDPAddr("udp", recAddress) //finner UDP addresses tilknyttet IP addressen/portnummeret
 
-
-
 	if err != nil { //evt si ifra hvis noe gikk galt
 		fmt.Println("Error resolving UDP address:", err)
 		return
@@ -27,7 +25,7 @@ func receiver(){
 
 
 	defer recConn.Close() //defer sier at en funksjon, i dette tilfellet conn.Close() som dreper UDPConn-en vår,
-	//skal utføres når funksjonen den er i, i dette tilfellet main, er ferdig
+	//skal utføres når funksjonen den er i, i dette tilfellet receiver, er ferdig
 
 	fmt.Println("UDP Server listening on", recAddress)
 
@@ -49,7 +47,7 @@ func receiver(){
 }
 
 func sender(){
-	sendAddress := "20013"
+	sendAddress := ":20013"
 	serverAddr, err := net.ResolveUDPAddr("udp", sendAddress)
 
 	if err != nil {
@@ -63,7 +61,7 @@ func sender(){
 		return
 	}
 
-	defer sendConn.Close()
+	//defer sendConn.Close()
 
 	// Message to send
 	message := []byte("Hiya guys!")
