@@ -3,29 +3,41 @@ package main
 import (
 	"fmt"
 	"net"
+	"runtime"
+	"time"
 )
 
-func receiver(finishCh chan bool) {
+var error_ch chan string
+var sel = ""
+var received_ch chan string
+var quit chan bool
+var i = 0
+
+func init() {
+	error_ch = make(chan string)
+	received_ch = make(chan string)
+	quit = make(chan bool)
+}
+
+func receiver() {
 	// Specify the address to listen on (including port)
 	recAddress := ":20013"                                //Opprett streng med IP addresse (eller portnummer, begge funker)
 	udpAddr, err := net.ResolveUDPAddr("udp", recAddress) //finner UDP addresses tilknyttet IP addressen/portnummeret
 
 	if err != nil { //evt si ifra hvis noe gikk galt
-		fmt.Println("Error resolving UDP address:", err)
+		error_ch <- "Error resolving UDP address:"
 		return
 	}
 
 	// Create a UDP connection
 	recConn, err := net.ListenUDP("udp", udpAddr) //returnerer enn net.UDPConn variabel som kan sende og receive fra UDP addressen
 	if err != nil {                               //blablabla feilhåndtering
-		fmt.Println("Error listening on UDP:", err)
+		error_ch <- "Error listening on UDP:"
 		return
 	}
 
 	//defer recConn.Close() //defer sier at en funksjon, i dette tilfellet conn.Close() som dreper UDPConn-en vår,
 	//skal utføres når funksjonen den er i, i dette tilfellet receiver, er ferdig
-
-	fmt.Println("UDP Server listening on", recAddress)
 
 	// Buffer to hold incoming data
 	buffer := make([]byte, 1024)
@@ -34,66 +46,77 @@ func receiver(finishCh chan bool) {
 		// Read data from the connection
 		n, clientAddr, err := recConn.ReadFromUDP(buffer)
 		if err != nil {
-			fmt.Println("Error reading from UDP:", err)
+			error_ch <- "Error reading from UDP:"
 			continue
 		}
 
 		// Process the received data
 		data := buffer[:n]
-		fmt.Printf("Received from %v: %s\n", clientAddr, data)
+		received_ch <- fmt.Sprintf("Received from %v: %s\n", clientAddr, data)
 
 	}
-
-	finishCh <- true
 }
 
-func sender(finishCh chan bool) {
+func sender() {
 	sendAddress := ":20013"
 	serverAddr, err := net.ResolveUDPAddr("udp", sendAddress)
 
 	if err != nil {
-		fmt.Println("Error resolving UDP address:", err)
+		error_ch <- "Error resolving UDP address:"
 		return
 	}
 
 	sendConn, err := net.DialUDP("udp", nil, serverAddr)
 	if err != nil {
-		fmt.Println("Error connecting to UDP server:", err)
+		error_ch <- "Error listening on UDP:"
 		return
 	}
 
 	//defer sendConn.Close()
 
 	// Message to send
-	message := []byte("Hiya guys!")
+	for {
+		message := []byte("Hiya guys!")
 
-	// Send the message
-	for i := 0; i < 10; i++ {
+		// Send the message
 		_, err = sendConn.Write(message)
 		if err != nil {
-			fmt.Println("Error sending message:", err)
+			error_ch <- "Error sending message:"
 			return
 		}
-
-		fmt.Println("Message sent to", serverAddr)
+		time.Sleep(500 * time.Millisecond)
+		i++
+		if i == 10 {
+			quit <- true
+		}
 	}
-
-	finishCh <- true
 
 }
 
-func main() {
-	//runtime.GOMAXPROCS(2)
-
-	finishSendCh := make(chan bool)
-	finishRecCh := make(chan bool)
-
-	go sender(finishSendCh)
-	go receiver(finishRecCh)
-
+func server() {
 	for {
-		if <-finishRecCh && <-finishSendCh {
-			fmt.Println("Finished")
+		select {
+		case sel := <-received_ch:
+			fmt.Println(sel)
+		case sel := <-error_ch:
+			fmt.Println(sel)
+			quit <- true
+			break
+		case <-quit:
+			break
 		}
+
 	}
+}
+
+func main() {
+	runtime.GOMAXPROCS(2)
+
+	go sender()
+	go receiver()
+	go server()
+
+	<-quit
+
+	fmt.Println("Jippi")
 }
