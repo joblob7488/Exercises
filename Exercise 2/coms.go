@@ -3,7 +3,7 @@ package main
 import (
 	//"Network-go/network/bcast"
 	//"Network-go/network/localip"
-	//"Network-go/network/peers"
+	"Network-go/network/peers"
 	//"flag"
 	//"fmt"
 	//"os"
@@ -54,8 +54,8 @@ func transmit(tx_ch chan){
 	//
 }
 
-func recieve(rx_ch chan,){
-
+func recieve(ch chan, port uint){
+	peers.Receiver(port, ch)
 }
 
 func main(){
@@ -66,6 +66,12 @@ func main(){
 			localIP = "DISCONNECTED"
 		}
 		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
+	}
+
+	rx := make(rx_ch chan)
+	go recieve(rx_ch,30000)
+	for{
+		println(<-rx)
 	}
 
 }
