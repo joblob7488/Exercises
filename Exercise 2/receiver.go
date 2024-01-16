@@ -7,7 +7,11 @@ import (
 
 func main() {
 	// Specify the address to listen on (including port)
+<<<<<<< HEAD
 	address := ":20013"                                //":30000" //Opprett streng med IP addresse (eller portnummer, begge funker)
+=======
+	address := ":30000" //Opprett streng med IP addresse (eller portnummer, begge funker)
+>>>>>>> f94831ecb52bdd1243f6bc2e9acf0bdd0f2fce07
 	udpAddr, err := net.ResolveUDPAddr("udp", address) //finner UDP addresses tilknyttet IP addressen/portnummeret
 
 	if err != nil { //evt si ifra hvis noe gikk galt
@@ -32,7 +36,7 @@ func main() {
 
 	for {
 		// Read data from the connection
-		n, clientAddr, err := conn.ReadFromUDP(buffer)
+		n, clientAddr, err := conn.ReadFromUDP(buffer) 
 		if err != nil {
 			fmt.Println("Error reading from UDP:", err)
 			continue
