@@ -6,7 +6,7 @@ import (
 	"runtime"
 )
 
-func receiver(){
+func receiver(convChan chan string){
 	// Specify the address to listen on (including port)
 	recAddress := ":20013" //Opprett streng med IP addresse (eller portnummer, begge funker)
 	udpAddr, err := net.ResolveUDPAddr("udp", recAddress) //finner UDP addresses tilknyttet IP addressen/portnummeret
@@ -45,10 +45,11 @@ func receiver(){
 		// Process the received data
 		data := buffer[:n]
 		fmt.Printf("Received from %v: %s\n", clientAddr, data)
+		convChan <- ""
 	}
 }
 
-func sender(){
+func sender(convChan chan string){
 	sendAddress := "20013"
 	serverAddr, err := net.ResolveUDPAddr("udp", sendAddress)
 
@@ -76,12 +77,15 @@ func sender(){
 	}
 
 	fmt.Println("Message sent to", serverAddr)
+	convChan <- 
 }
 
 
 func main() {
 	runtime.GOMAXPROCS(2)
 
-	go sender()
-	go receiver()
+	convChan := make(chan string)
+
+	go sender(convChan)
+	go receiver(convChan)
 }
