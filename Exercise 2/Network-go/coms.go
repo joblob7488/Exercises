@@ -1,8 +1,6 @@
 package main
 
 import (
-	//"Network-go/network/bcast"
-	//"Network-go/network/localip"
 	"Network-go/network/bcast"
 	"Network-go/network/peers"
 	//"fmt"
